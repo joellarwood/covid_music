@@ -1,0 +1,198 @@
+---
+title: "COVID study factor structure "
+output: html_notebook
+---
+
+# Write and examine in data 
+
+From the plots below we can see there is a large missing data problem. For the sake of simplicity I have retained participants who completed > 50% of the study
+```{r}
+survey <- read_rds("reduced_international_student_survey.rds") %>% 
+  tibble::rowid_to_column(var = "p_id")
+
+survey %>% 
+  visdat::vis_miss()
+
+survey %>% 
+  visdat::vis_dat()
+
+survey_adequate_sample <- survey %>% 
+  filter(prop_miss_all < .5) #delete cases with < 50% missing data 
+
+
+covid_labels <- survey_adequate_sample %>% 
+  select(contains("covid")) %>% 
+  labelled::look_for() %>% 
+  tidyr::separate(
+    col = label, 
+    into = c("instruction", "question"),
+    sep = ". - "
+  ) %>% 
+  select(-instruction) %>% 
+  remove_rownames() %>% 
+  column_to_rownames("variable")
+```
+
+# Covid Questions
+
+The COIVD questions are n ot pre-validated. I am going look at factor solutions for these questions to create a composite score/s
+
+## Plotting responses 
+```{r}
+
+survey_adequate_sample %>% 
+  select(
+    contains("covid")
+  ) %>% 
+psych::describe() %>% 
+  select(-mad, 
+         -min,
+         -trimmed,
+         -max, 
+         -range, 
+         -kurtosis) %>% 
+  mutate_all(round, 2) %>% 
+knitr::kable(format = 'html',
+             caption =  "COIVD variables") %>% 
+  kableExtra::kable_styling()
+
+
+survey_adequate_sample %>% 
+  select(
+    p_id,
+    contains("covid")
+  ) %>% 
+  mutate_all(as.numeric) %>% 
+  pivot_longer(
+    -p_id,
+    names_to = "Question", 
+    values_to = "Response"
+  ) %>% 
+  drop_na(Response) %>% 
+  mutate(Question = as_factor(Question)) %>% 
+  ggplot(
+    aes(x = Response,
+        color = Question,
+        fill = Question
+        )
+  ) + 
+  facet_wrap(facets = ~ Question) + 
+  geom_histogram(bins =5)+
+  ggtitle("Hisotgram of Reponses to COVID Questions") +
+  theme_classic()
+  
+```
+
+## Exploratory factor analysis COVID questions
+
+I have undertaken 3 EFA (1, 2, and 3 factor models).
+```{r}
+covid_vars <- survey_adequate_sample %>% 
+  select(covid_19_stress_1:covid_19_stress_13) %>% 
+  as.matrix()
+
+
+psych::scree(covid_vars)
+
+psych::fa.parallel(
+  covid_vars,
+  fa = "fa"
+)
+  
+
+covid_fa_2 <- psych::fa(
+  covid_vars, 
+  nfactors = 2
+)
+
+covid_fa_1 <- psych::fa(
+  covid_vars, 
+  nfactors = 1
+)
+
+covid_fa_3 <- psych::fa(
+  covid_vars, 
+  nfactors = 3
+)
+
+covid_fa_4 <- psych::fa(
+  covid_vars, 
+  nfactors = 4
+)
+
+```
+
+```{r}
+fa.lookup(
+  covid_fa_1, 
+  dictionary = covid_labels
+  ) %>% 
+  data.frame() %>% 
+  rownames_to_column(var = "Question ID") %>% 
+  select(
+    "Question ID", 
+    "question",
+    everything()
+  ) %>% 
+  knitr::kable(format = 'html',
+               caption = "1 factor") %>% 
+  kableExtra::kable_styling()
+
+psych::fa.diagram(covid_fa_1)
+```
+
+```{r}
+fa.lookup(
+  covid_fa_2, 
+  dictionary = covid_labels
+)  %>% 
+  rownames_to_column(var = "Question ID") %>% 
+  select(
+    "Question ID", 
+    "question",
+    everything()
+  ) %>% 
+  knitr::kable(format = 'html',
+               caption = "2 factors") %>% 
+  kableExtra::kable_styling()
+
+psych::fa.diagram(covid_fa_2)
+```
+
+```{r}
+fa.lookup(
+  covid_fa_3, 
+  dictionary = covid_labels
+) %>% 
+  rownames_to_column(var = "Question ID") %>% 
+  select(
+    "Question ID", 
+    "question",
+    everything()
+  ) %>% 
+  knitr::kable(format = 'html', 
+               caption = "3 factors") %>% 
+  kableExtra::kable_styling()
+
+psych::fa.diagram(covid_fa_3)
+
+```
+
+```{r}
+fa.lookup(
+  covid_fa_4, 
+  dictionary = covid_labels
+) %>% 
+  rownames_to_column(var = "Question ID") %>% 
+  select(
+    "Question ID", 
+    "question",
+    everything()
+  ) %>% 
+  knitr::kable(format = 'html', 
+               caption = "3 factors") %>% 
+  kableExtra::kable_styling()
+
+psych::fa.diagram(covid_fa_4)
+
+```

@@ -1,0 +1,711 @@
+---
+title: "Music use by internatinal students during COVID-19"
+output:
+  html_document:
+    code_folding: hide
+    toc: TRUE
+---
+
+
+```{r echo = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  error = TRUE,
+  tidy = TRUE
+)
+
+options(scipen = 999)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+library(visdat)
+library(tableone)
+library(psych)
+library(labelled)
+library(skimr)
+library(lubridate)
+library(sjPlot)
+library(broom)
+library(interactions)
+library(sandwich)
+```
+
+# Write and examine in data 
+
+From the plots below we can see there is a large missing data problem. For the sake of simplicity I have retained participants who completed > 50% of the study
+```{r}
+survey <- read_rds("reduced_international_student_survey.rds") %>%
+  tibble::rowid_to_column(var = "p_id")
+
+survey %>%
+  visdat::vis_miss()
+
+survey %>%
+  visdat::vis_dat()
+
+survey_adequate_sample <- survey %>%
+  filter(prop_miss_all < .5) # delete cases with < 50% missing data
+
+
+covid_labels <- survey_adequate_sample %>%
+  select(contains("covid")) %>%
+  labelled::look_for() %>%
+  tidyr::separate(
+    col = label,
+    into = c("instruction", "question"),
+    sep = ". - "
+  ) %>%
+  select(-instruction) %>%
+  remove_rownames() %>%
+  column_to_rownames("variable")
+```
+
+# Descriptives
+
+```{r}
+
+covid_alpha <- survey_adequate_sample %>%
+  select(contains("covid")) %>%
+  psych::alpha()
+
+wellbeing_alpha <- survey_adequate_sample %>%
+  select(contains("wellbeing")) %>%
+  psych::alpha()
+
+survey_scores <- survey_adequate_sample %>%
+  mutate(
+    covid_scale = select(
+      .,
+      contains("covid")
+    ) %>%
+      rowMeans(na.rm = TRUE),
+    wellbeing_scale = select(
+      .,
+      contains("wellbeing")
+    ) %>%
+      rowMeans(na.rm = TRUE),
+    date = ymd_hms(recorded_date) %>%
+      round_date(unit = "day"),
+    citizen_dichot = if_else(
+      str_detect(citizenship,
+        pattern = regex("aus",
+          ignore_case = TRUE
+        )
+      ),
+      "Australian Citizen",
+      "Not Australia Citizen",
+    ),
+    age = as.numeric(age)
+  )
+```
+## Sample characterstics
+
+The average age of the sample was `r mean(survey_scores$age, na.rm = TRUE)` with a standard deviation of `r sd(survey_scores$age, na.rm = TRUE)`. Of these participants `r as.numeric(table(survey_scores$citizen_dichot))[1]` were had Australian citizenship. 
+
+## Time of completion
+
+Covid-19 was a rapidly unfolding situation so time may have been an important variable. The histogram below shows how responses to the survey were ditributed. The density plot shows that citizenship did have an impact on when the survey was completed
+
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      x = date,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_density(alpha = .6) +
+  theme_classic()
+```
+
+
+## COVID questionairre 
+This questionairre has not been pre validated. However treating it as one measure the alpha value shows good reliability, alpha `r round(covid_alpha$total$raw_alpha, 2)`. The mean of all items was `r round(mean(survey_scores$covid_scale, na.rm = TRUE), 2)` with a SD of `r round(sd(survey_scores$covid_scale, na.rm = TRUE), 2)`. A density plot of scores according to citezenship can be seen below. 
+
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      x = covid_scale,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_density(alpha = .6) +
+  theme_classic()
+```
+
+```{r}
+covid_t <- t.test(
+  formula = covid_scale ~ citizen_dichot,
+  data = survey_scores
+)
+```
+
+Citizenship status did affect scores, such that Australia citizens had lower covid related stress (*M* = `r round(as.numeric(covid_t$estimate[1]), 2)`) compared to non-Australian citizens (*M* = `r round(as.numeric(covid_t$estimate[2]), 2)`), *t* = `r round(as.numeric(covid_t$statistic), 2)`, *p* = `r round(as.numeric(covid_t$p.value),5)`. 
+
+## Wellbeing Questionairre 
+This questionairre has not been pre validated. The reliability of the scale was low, alpha = `r round(wellbeing_alpha$total$raw_alpha, 2)` (the reliability increases to .63 if item 4 is dropped but this has not been done). The mean of all items was `r round(mean(survey_scores$wellbeing_scale, na.rm = TRUE), 2)` with a SD of `r round(sd(survey_scores$wellbeing_scale, na.rm = TRUE), 2)` 
+
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      x = wellbeing_scale,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_density(alpha = .6) +
+  theme_classic()
+```
+
+```{r}
+wellbeing_t <- t.test(
+  wellbeing_scale ~ citizen_dichot,
+  data = survey_scores
+)
+```
+
+Citizenship status did not affect scores, such that Australian citizens had equitable wellbeing  (*M* = `r round(as.numeric(wellbeing_t$estimate[1]), 2)`) compared to non-Australian citizens (*M* = `r round(as.numeric(wellbeing_t$estimate[2]), 2)`), *t* = `r round(as.numeric(wellbeing_t$statistic), 2)`, *p* = `r round(as.numeric(wellbeing_t$p.value), 4)`
+
+
+## Coping strategies
+
+Participants rated a number of coping strategies, such as listening to music, exercising and using the internet. 
+
+From the plot we can see that music is the most commonly used (however significance testing still needs to be completed)
+```{r}
+mean_coping <- survey_scores %>%
+  select(contains("coping")) %>%
+  select(
+    "exercise" = coping_strategies_1,
+    "Music" = coping_strategies_2,
+    "Chores" = coping_strategies_3,
+    "Sleep" = coping_strategies_4,
+    "Control_Thoughts" = coping_strategies_5,
+    "Evalaute_Situation" = coping_strategies_6,
+    "Perspective_Taking" = coping_strategies_7,
+    "Avoid_Thing" = coping_strategies_8,
+    "Alone" = coping_strategies_9,
+    "Relaxation_Techniques" = coping_strategies_10,
+    "Stress_Management" = coping_strategies_11,
+    "Religious_Activity" = coping_strategies_12,
+    "Change_Location" = coping_strategies_13,
+    "Call_Someone" = coping_strategies_14,
+    "Internet" = coping_strategies_15
+  ) %>%
+  summarise_all(list(~ mean(., na.rm = TRUE))) %>%
+  pivot_longer(everything(),
+    names_to = "activity",
+    values_to = "mean"
+  )
+
+sd_coping <- survey_scores %>%
+  select(contains("coping")) %>%
+  select(
+    "Exercise" = coping_strategies_1,
+    "Music" = coping_strategies_2,
+    "Chores" = coping_strategies_3,
+    "Sleep" = coping_strategies_4,
+    "Control_Thoughts" = coping_strategies_5,
+    "Evalaute_Situation" = coping_strategies_6,
+    "Perspective_Taking" = coping_strategies_7,
+    "Avoid_Thing" = coping_strategies_8,
+    "Alone" = coping_strategies_9,
+    "Relaxation_Techniques" = coping_strategies_10,
+    "Stress_Management" = coping_strategies_11,
+    "Religious_Activity" = coping_strategies_12,
+    "Change_Location" = coping_strategies_13,
+    "Call_Someone" = coping_strategies_14,
+    "Internet" = coping_strategies_15
+  ) %>%
+  summarise_all(list(~ sd(., na.rm = TRUE))) %>%
+  pivot_longer(everything(),
+    names_to = "activity",
+    values_to = "sd"
+  )
+
+mean_sd_coping <- bind_cols(mean_coping, sd_coping) %>%
+  select(-activity1) %>%
+  mutate(
+    activity = str_replace(
+      activity,
+      pattern = "_",
+      replacement = " "
+    )
+  ) %>%
+  arrange(mean)
+
+
+mean_sd_coping %>%
+  ggplot(
+    aes(
+      x = reorder(activity, mean),
+      y = mean,
+      color = activity,
+      fill = activity
+    )
+  ) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(
+    aes(
+      ymin = mean - sd,
+      ymax = mean + sd
+    ),
+    width = .2,
+    alpha = .6,
+    color = "black"
+  ) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  coord_flip() +
+  labs(
+    title = "Mean endorsement of coping strategies",
+    caption = "Error bars indicate SD"
+  ) +
+  xlab("Coping Activity")
+```
+
+### Muisic use by citizenship 
+
+```{r}
+music_t <- t.test(
+  formula = coping_strategies_2 ~ citizen_dichot,
+  data = survey_scores
+)
+```
+
+Citizenship status did not affect scores, such that Australian citizens had equitable wellbeing  (*M* = `r round(as.numeric(music_t$estimate[1]), 2)`) compared to non-Australian citizens (*M* = `r round(as.numeric(music_t$estimate[2]), 2)`), *t* = `r round(as.numeric(music_t$statistic), 2)`, *p* = `r round(as.numeric(music_t$p.value), 4)`
+
+# Responses over time 
+
+As COVID_19 was rapidly moving it is interesting to see how time may be affecting things. Here I present the trends for scores accross citizenship according to time. From these plots it seems the time effect is minimal. 
+
+
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      y = covid_scale,
+      x = date,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_point(alpha = .6) +
+  stat_smooth(method = "lm") +
+  ggtitle(
+    label = "COVID stress over time",
+    subtitle = "Each participant measured once only"
+  ) +
+  theme_classic()
+```
+
+  
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      y = wellbeing_scale,
+      x = date,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_point(alpha = .6) +
+  stat_smooth(method = "lm") +
+  ggtitle(
+    label = "Wellbeing over time",
+    subtitle = "Each participant measured once only"
+  )
+theme_classic()
+```
+
+## Music use over time 
+
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      y = coping_strategies_2,
+      x = date,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_point(alpha = .6) +
+  stat_smooth(method = "lm") +
+  ggtitle(
+    label = "Music use to cope over time",
+    subtitle = "Each participant measured once only"
+  ) +
+  theme_classic() +
+  ylab("Use of Music") +
+  ylim(c(1, 5))
+```
+  
+  
+# Relationships between key variables (ignoring time)
+
+On the surface it seems like time is having little impact on scores (although higher order interactions may be at play). Here I consider the correaltions between key variables.
+
+## COIVD stress and wellbeing 
+
+```{r}
+
+covid_wellbeing_cor <- cor.test(
+  survey_scores$covid_scale,
+  survey_scores$wellbeing_scale
+)
+
+covid_wellbeing_cor <- broom::tidy(
+  lm(
+    covid_scale~wellbeing_scale, 
+    data = survey_scores
+  )
+)
+
+covid_wellbeing_cor_non_aus <- broom::tidy(
+  lm(
+    covid_scale~wellbeing_scale, 
+    data = filter(
+      survey_scores, citizen_dichot != "Australian Citizen"
+      )
+    )
+  )
+
+covid_wellbeing_cor_aus <- broom::tidy(
+  lm(
+    covid_scale ~ wellbeing_scale, 
+    data = filter(
+      survey_scores, citizen_dichot == "Australian Citizen"
+      )
+    )
+  )
+```
+
+The initial correlation found no relationship between COIVD stress and wellbeing, `r round(as.numeric(covid_wellbeing_cor[2, 2]), 2)`, p = `r round(as.numeric( covid_wellbeing_cor[2, 5]), 2)`. Furthermore there was no interaction with citizenship. 
+
+```{r}
+
+covid_by_wellbing <- lm(
+  wellbeing_scale ~ covid_scale * citizen_dichot,
+  data = survey_scores
+)
+
+sjPlot::tab_model(covid_by_wellbing,
+  show.std = TRUE
+)
+```
+
+When performing the correlation on the Australian and non Australian subsets of the data there was no correlation for participants with Australian citizenship, est = `r round(as.numeric(covid_wellbeing_cor_aus[2, 2]), 2)`, p = `r round(as.numeric( covid_wellbeing_cor_aus[2, 5]), 2)`. There was also no correlation for participants who did not hold Australian citizenship `r round(as.numeric(covid_wellbeing_cor_non_aus[2, 2]), 2)`, p = `r round(as.numeric( covid_wellbeing_cor_non_aus[2, 5]), 2)`
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      y = wellbeing_scale,
+      x = covid_scale,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_point(alpha = .6) +
+  stat_smooth(method = "lm") +
+  ggtitle(label = "Relationship between COIVD stress and Wellbeing") +
+  theme_classic()
+```
+
+
+## Music use and COVID stress
+
+```{r}
+covid_music_cor <- broom::tidy(
+  lm(
+    coping_strategies_2~covid_scale, 
+    data = survey_scores)
+)
+
+covid_music_cor_non_aus <- broom::tidy(
+  lm(
+    coping_strategies_2~covid_scale, 
+    data = filter(
+      survey_scores, citizen_dichot != "Australian Citizen"
+      )
+    )
+  )
+
+covid_music_cor_aus <- broom::tidy(
+  lm(
+    coping_strategies_2~covid_scale, 
+    data = filter(
+      survey_scores, citizen_dichot == "Australian Citizen"
+      )
+    )
+  )
+```
+
+The initial correlation found a relationship between COIVD stress and music use, `r round(as.numeric(covid_music_cor[2, 2]), 2)`, p = `r round(as.numeric(covid_music_cor[2, 5]), 3)`. There was an interaction with citizenship. 
+
+```{r}
+
+covid_by_music <- lm(
+  as.numeric(coping_strategies_2) ~ as.numeric(covid_scale) * citizen_dichot,
+  data = survey_scores
+)
+
+sjPlot::tab_model(covid_by_music,
+  show.std = TRUE,
+  dv.labels = c("Music Use")
+)
+```
+
+When performing the correlation on the Australian and non Australian subsets of the data there was no correlation for participants with Australian citizenship, est = `r round(as.numeric(covid_music_cor_aus[2, 2]), 2)`, p = `r round(as.numeric( covid_music_cor_aus[2, 5]), 2)`. There was a positive correlation for participants who did not hold Australian citizenship `r round(as.numeric(covid_music_cor_non_aus[2, 2]), 2)`, p = `r round(as.numeric( covid_music_cor_non_aus[2, 5]), 2)`. 
+
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      y = coping_strategies_2,
+      x = covid_scale,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_point(alpha = .6) +
+  stat_smooth(method = "lm") +
+  ggtitle(label = "Relationship between COIVD stress and Use of Music") +
+  theme_classic() +
+  ylab("Use of Music") +
+  xlab("COVID Scale")
+  ylim(c(1, 5))
+```
+
+
+## Music use and wellbeing 
+
+```{r}
+wellbeing_music_cor <- broom::tidy(
+  lm(
+    coping_strategies_2~wellbeing_scale, 
+    data = survey_scores)
+)
+
+wellbeing_music_cor_non_aus <- broom::tidy(
+  lm(
+    coping_strategies_2~wellbeing_scale, 
+    data = filter(
+      survey_scores, citizen_dichot != "Australian Citizen"
+      )
+    )
+  )
+
+wellbeing_music_cor_aus <- broom::tidy(
+  lm(
+    coping_strategies_2~wellbeing_scale, 
+    data = filter(
+      survey_scores, citizen_dichot == "Australian Citizen"
+      )
+    )
+  )
+```
+
+The initial correlation found a relationship between COIVD stress and wellbeing, `r round(as.numeric(covid_music_cor[2, 2]), 2)`, p = `r round(as.numeric(wellbeing_music_cor[2, 5]), 3)`. There was an interaction with citizenship. 
+
+```{r}
+
+wellbeing_by_music <- lm(
+  as.numeric(coping_strategies_2) ~ as.numeric(wellbeing_scale) * citizen_dichot,
+  data = survey_scores
+)
+
+sjPlot::tab_model(wellbeing_by_music,
+  show.std = TRUE,
+  dv.labels = c("Use of Music")
+)
+```
+
+However differences in the slopes can be seen. When performing the correlation on the Australian and non Australian subsets of the data there was no correlation for participants with Australian citizenship, est = `r round(as.numeric(wellbeing_music_cor_aus[2, 2]), 2)`, p = `r round(as.numeric(wellbeing_music_cor_aus[2, 5]), 2)`. There was a positive correlation for participants who did not hold Australian citizenship, est = `r round(as.numeric(wellbeing_music_cor_non_aus[2, 2]), 2)`, p = `r round(as.numeric(wellbeing_music_cor_non_aus[2, 2]), 2)`
+
+```{r}
+survey_scores %>%
+  ggplot(
+    aes(
+      y = coping_strategies_2,
+      x = wellbeing_scale,
+      color = citizen_dichot,
+      fill = citizen_dichot
+    )
+  ) +
+  geom_point(alpha = .6) +
+  stat_smooth(method = "lm") +
+  ggtitle(label = "Relationship between music use and Wellbeing") +
+  theme_classic() +
+  ylab("Use of Music") +
+  ylim(c(1, 5))
+```
+
+
+# Music, COVID stress, and wellbeing 
+
+The previous tests indicate that there was a positive relationship between covid stress and music use and between wellbeing and music use. The two psychological measures were uncorrelated though. We also know the citizenship status moderates this 
+
+I am now interested to see how these measures combine and if there is a higher order interaction. 
+
+The table below shows the two competing models
+
+```{r}
+additive_music_use <- lm(
+  coping_strategies_2 ~ covid_scale*citizen_dichot + wellbeing_scale*citizen_dichot , 
+  data = survey_scores %>% 
+    mutate_at(vars(coping_strategies_2,
+                    covid_scale,
+                    wellbeing_scale), as.numeric))
+
+interacting_music_use <- lm(
+  coping_strategies_2 ~ covid_scale*citizen_dichot* wellbeing_scale, 
+  data = survey_scores %>% 
+    mutate_at(vars(coping_strategies_2,
+                    covid_scale,
+                    wellbeing_scale), as.numeric))
+
+sjPlot::tab_model(additive_music_use,
+                  interacting_music_use, 
+                  show.est = FALSE,
+                  show.std = TRUE,
+                  dv.labels = c("Music Use", "Music Use"))
+
+
+```
+
+```{r}
+model_anova <- as.data.frame(anova(additive_music_use,
+      interacting_music_use))
+
+
+```
+
+The model where the three way interaction is considered explains significantly more variance then when only the two-way interactions are considered, *F* = `r round(model_anova[2, 5], 2)`, *p* = `r round(model_anova[2, 6], 3)`. 
+
+The interaction between COVID stress and wellbeing can be seen at the level of non-Australian citizens only. When only the subset of the sample that does not hold Australian citizenship is considered a two way interaction is found. 
+
+```{r}
+interacting_music_use_non_aus <- lm(
+  coping_strategies_2 ~ covid_scale*wellbeing_scale, 
+  data = survey_scores %>% 
+    mutate_at(vars(coping_strategies_2,
+                    covid_scale,
+                    wellbeing_scale), as.numeric) %>% 
+    filter(citizen_dichot != "Australian Citizen"))
+
+sjPlot::tab_model(interacting_music_use_non_aus, 
+                  show.est = FALSE,
+                  show.std = TRUE,
+                  dv.labels = c("Music Use"))
+```
+
+```{r}
+sjPlot::plot_model(
+  interacting_music_use_non_aus,
+  type = "int",
+  mdrt.values = "meansd"
+) +
+  ggplot2::ylab("Music Use") +
+  ggplot2::ggtitle("Interaction between COVID stress and Wellbeing for non-Austrlian citizens") +
+  theme_classic()
+```
+
+```{r eval = FALSE, message=TRUE}
+jn_non_aus <- interactions::johnson_neyman(interacting_music_use_non_aus,
+                         pred = covid_scale,
+                         modx = wellbeing_scale
+                        )
+
+jn_non_aus_upper <- round(as.numeric(jn_non_aus[["bounds"]])[2], 2)
+```
+
+The Johnson Neyman interval below indicates that when wellbeing is then COVID stress predicts increased music use. This is represented visually below
+
+```{r}
+jn_non_aus[["plot"]]
+```
+
+
+
+
+```{r eval = FALSE}
+
+aus_data <- survey_scores %>% 
+  filter(citizen_dichot == "Australian Citizen") %>% 
+  mutate_all(as.numeric)
+
+additive_music_use_aus <- lm(
+  coping_strategies_2 ~ covid_scale + wellbeing_scale, 
+  data = aus_data)
+
+interacting_music_use_aus <- lm(
+  coping_strategies_2 ~ covid_scale * wellbeing_scale, 
+  data = aus_data)
+
+sjPlot::tab_model(additive_music_use_aus,
+                  interacting_music_use_aus, 
+                  show.est = FALSE,
+                  show.std = TRUE,
+                  dv.labels = c("Music Use", "Music Use"))
+```
+
+```{r eval = FALSE}
+
+non_aus_data <- survey_scores %>% 
+  filter(citizen_dichot != "Australian Citizen") %>% 
+  mutate_all(as.numeric)
+
+additive_music_use_non_aus <- lm(
+  coping_strategies_2 ~ covid_scale + wellbeing_scale, 
+  data = non_aus_data)
+
+interacting_music_use_non_aus <- lm(
+  coping_strategies_2 ~ covid_scale * wellbeing_scale, 
+  data = non_aus_data)
+
+sjPlot::tab_model(additive_music_use_non_aus,
+                  interacting_music_use_non_aus, 
+                  show.est = FALSE,
+                  show.std = TRUE,
+                  dv.labels = c("Music Use", "Music Use"))
+
+non_aus_int <- broom::tidy(
+  anova(
+    additive_music_use_non_aus, interacting_music_use_non_aus
+  )
+)
+
+```
+
+
+
+```{r eval = FALSE}
+sjPlot::plot_model(
+  interacting_music_use_non_aus,
+  type = "int",
+  mdrt.values = "meansd"
+) +
+  ggplot2::ylab("Music Use") +
+  ggplot2::ggtitle("Interaction between COVID stress and Wellbeing for non-Austrlian citizens") +
+  theme_classic()
+```
+
+
+```{r eval = FALSE}
+interactions::sim_slopes(interacting_music_use_non_aus,
+                         pred = covid_scale,
+                         modx = wellbeing_scale,
+                         robust = FALSE)
+```
+
