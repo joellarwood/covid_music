@@ -4,6 +4,7 @@ output:
   html_document:
     code_folding: hide
     toc: TRUE
+    toc_float: TRUE
 ---
 
 
@@ -324,7 +325,7 @@ survey_scores %>%
   ggtitle(
     label = "Wellbeing over time",
     subtitle = "Each participant measured once only"
-  )
+  ) +
 theme_classic()
 ```
 
@@ -621,91 +622,22 @@ sjPlot::plot_model(
   theme_classic()
 ```
 
-```{r eval = FALSE, message=TRUE}
+```{r}
 jn_non_aus <- interactions::johnson_neyman(interacting_music_use_non_aus,
                          pred = covid_scale,
                          modx = wellbeing_scale
                         )
 
 jn_non_aus_upper <- round(as.numeric(jn_non_aus[["bounds"]])[2], 2)
+
+jn_plot <- jn_non_aus[["plot"]]
+
 ```
 
-The Johnson Neyman interval below indicates that when wellbeing is then COVID stress predicts increased music use. This is represented visually below
+The Johnson Neyman interval below indicates that when wellbeing is > than `r jn_non_aus_upper`  COVID stress predicts increased music use. This is represented visually below
 
 ```{r}
-jn_non_aus[["plot"]]
+jn_plot
 ```
 
-
-
-
-```{r eval = FALSE}
-
-aus_data <- survey_scores %>% 
-  filter(citizen_dichot == "Australian Citizen") %>% 
-  mutate_all(as.numeric)
-
-additive_music_use_aus <- lm(
-  coping_strategies_2 ~ covid_scale + wellbeing_scale, 
-  data = aus_data)
-
-interacting_music_use_aus <- lm(
-  coping_strategies_2 ~ covid_scale * wellbeing_scale, 
-  data = aus_data)
-
-sjPlot::tab_model(additive_music_use_aus,
-                  interacting_music_use_aus, 
-                  show.est = FALSE,
-                  show.std = TRUE,
-                  dv.labels = c("Music Use", "Music Use"))
-```
-
-```{r eval = FALSE}
-
-non_aus_data <- survey_scores %>% 
-  filter(citizen_dichot != "Australian Citizen") %>% 
-  mutate_all(as.numeric)
-
-additive_music_use_non_aus <- lm(
-  coping_strategies_2 ~ covid_scale + wellbeing_scale, 
-  data = non_aus_data)
-
-interacting_music_use_non_aus <- lm(
-  coping_strategies_2 ~ covid_scale * wellbeing_scale, 
-  data = non_aus_data)
-
-sjPlot::tab_model(additive_music_use_non_aus,
-                  interacting_music_use_non_aus, 
-                  show.est = FALSE,
-                  show.std = TRUE,
-                  dv.labels = c("Music Use", "Music Use"))
-
-non_aus_int <- broom::tidy(
-  anova(
-    additive_music_use_non_aus, interacting_music_use_non_aus
-  )
-)
-
-```
-
-
-
-```{r eval = FALSE}
-sjPlot::plot_model(
-  interacting_music_use_non_aus,
-  type = "int",
-  mdrt.values = "meansd"
-) +
-  ggplot2::ylab("Music Use") +
-  ggplot2::ggtitle("Interaction between COVID stress and Wellbeing for non-Austrlian citizens") +
-  theme_classic()
-```
-
-
-```{r eval = FALSE}
-interactions::sim_slopes(interacting_music_use_non_aus,
-                         pred = covid_scale,
-                         modx = wellbeing_scale,
-                         robust = FALSE)
-```
 
