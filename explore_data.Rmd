@@ -41,7 +41,8 @@ library(sandwich)
 From the plots below we can see there is a large missing data problem. For the sake of simplicity I have retained participants who completed > 50% of the study
 ```{r}
 survey <- read_rds("reduced_international_student_survey.rds") %>%
-  tibble::rowid_to_column(var = "p_id")
+  tibble::rowid_to_column(var = "p_id") 
+  
 
 survey %>%
   visdat::vis_miss()
@@ -52,18 +53,6 @@ survey %>%
 survey_adequate_sample <- survey %>%
   filter(prop_miss_all < .5) # delete cases with < 50% missing data
 
-
-covid_labels <- survey_adequate_sample %>%
-  select(contains("covid")) %>%
-  labelled::look_for() %>%
-  tidyr::separate(
-    col = label,
-    into = c("instruction", "question"),
-    sep = ". - "
-  ) %>%
-  select(-instruction) %>%
-  remove_rownames() %>%
-  column_to_rownames("variable")
 ```
 
 # Descriptives
