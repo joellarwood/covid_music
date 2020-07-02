@@ -1,0 +1,192 @@
+---
+title: "analyse_surveys"
+author: "Joel larwood"
+date: "2020-07-02"
+output:
+  html_document:
+    df_print: paged
+    toc: no
+  html_notebook: default
+  workflowr::wflow_html:
+    code_folding: hide
+    toc: no
+editor_options:
+  chunk_output_type: console
+---
+
+```{r housekeep}
+
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      error = FALSE)
+```
+
+```{r pacakges, echo = FALSE, message=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(naniar)
+library(kableExtra)
+library(apa)
+```
+
+```{r loadin}
+
+survey_analysis_data <- read_rds(
+  "data/adequately_sampled.rds"
+)
+
+```
+
+## Introduction {.tabset}
+
+In this section I provide the results of statistical analyses relating to the survey questions. 
+
+### Working Situation
+
+```{r}
+
+chi_sq_dat <- survey_analysis_data %>% 
+  mutate(at_home = if_else(current_circumstance == "Staying at home for study/work",
+                           TRUE,
+                           FALSE)) %>%
+  select(at_home, student_status)
+
+```
+
+Due to covid a number of different working situations were present. I am particulary interested in the proportions who were working from home rather than leaving the home. International students were more likely to be working from home than domestic students, `r apa::chisq_apa(stats::chisq.test(table(chi_sq_dat)), format = "rmarkdown")`
+
+```{r}
+broom::tidy(table(chi_sq_dat)) %>% 
+  knitr::kable(format = "html") %>% 
+  kableExtra::kable_styling()
+
+means <- survey_analysis_data %>% 
+  select(student_status,
+         covid_stress:psycheck) %>% 
+  group_by(student_status) %>% 
+  summarise_if(is.numeric, 
+               list(mean, sd), na.rm = TRUE)
+
+wellbeing_t <- apa::t_apa(t.test(formula = wellbeing ~ student_status, data = survey_analysis_data, var.equal = TRUE), format = "rmarkdown")
+
+psycheck_t <- apa::t_apa(t.test(formula = psycheck ~ student_status, data = survey_analysis_data, var.equal = TRUE), format = "rmarkdown")
+
+covid_emotions <- apa::t_apa(t.test(formula = emotional_response ~ student_status, data = survey_analysis_data, var.equal = TRUE), format = "rmarkdown")
+
+covid_stress_t <- apa::t_apa(t.test(formula = covid_stress ~ student_status, data = survey_analysis_data, var.equal = TRUE), format = "rmarkdown")
+```
+
+### Wellbeing Surveys
+
+International students (M = `r round(as.numeric(means[2, 4]), 2)`, SD = `r round(as.numeric(means[2, 8]),2)`) and domestic students M = `r round(as.numeric(means[1, 4]),2)`, SD = `r round(as.numeric(means[1, 8]),2)`) had equitable wellbeing, as measured by the Warick Edinburgh, *t*(387) = -0.91, *p* = .364, *d* = -0.09.  
+
+International students (M = `r round(as.numeric(means[2, 5]),2)`, SD = `r round(as.numeric(means[2, 9]),2)`) and domestic students M = `r round(as.numeric(means[1, 5]),2)`, SD = `r round(as.numeric(means[1, 9]),2)`) had also had equitable scores on the PsyCheck *t*(386) = -0.96, *p* = .337, *d* = -0.10. 
+
+There was also no difference between international students (M = `r round(as.numeric(means[2, 3]),2)`, SD = `r round(as.numeric(means[2, 7]),2)`) and domestic students M = `r round(as.numeric(means[1, 3]),2)`, SD = `r round(as.numeric(means[1, 7]),2)`), *t*(399) = -0.88, *p* = .378, *d* = -0.09. 
+
+However, international students had higher COVID stress (M = `r round(as.numeric(means[2, 2]),2)`, SD = `r round(as.numeric(means[2, 6]),2)`) than domestic students (M = `r round(as.numeric(means[1, 2]),2)`, SD = `r round(as.numeric(means[1, 6]),2)`), *t*(399) = -4.28, *p* < .001, *d* = -0.43.
+
+
+## Correlations between Music use and surveys {.tabset}
+
+### Music and COVID stress 
+
+```{r}
+music_covid <- lm(
+  as.numeric(music) ~ as.numeric(covid_stress),
+  data = survey_analysis_data
+)
+
+music_covid_status <- lm(
+  as.numeric(music) ~ as.numeric(covid_stress) * as.factor(student_status),
+  data = survey_analysis_data
+)
+
+sjPlot::tab_model(music_covid,
+                  music_covid_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+interactions::interact_plot(music_covid_status,
+                            pred = covid_stress,
+                            modx = student_status) +
+  ggplot2::ylim(1,6) +
+  theme_classic()
+```
+
+### Emotional response and Music
+```{r}
+music_covid_emotion <- lm(
+  as.numeric(music) ~ as.numeric(emotional_response),
+  data = survey_analysis_data
+)
+
+music_covid_emotion_status <- lm(
+  as.numeric(music) ~ as.numeric(emotional_response) * as.factor(student_status),
+  data = survey_analysis_data
+)
+
+sjPlot::tab_model(music_covid_emotion,
+                  music_covid_emotion_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+interactions::interact_plot(music_covid_emotion_status,
+                            pred = emotional_response,
+                            modx = student_status) +
+  ggplot2::ylim(1,6) +
+  theme_classic()
+```
+
+
+### Wellbeing and Music
+```{r}
+music_wellbeing <- lm(
+  as.numeric(music) ~ as.numeric(wellbeing),
+  data = survey_analysis_data
+)
+
+music_wellbeing_status <- lm(
+  as.numeric(music) ~ as.numeric(wellbeing) * as.factor(student_status),
+  data = survey_analysis_data
+)
+
+sjPlot::tab_model(music_wellbeing,
+                  music_wellbeing_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+interactions::interact_plot(music_wellbeing_status,
+                            pred = wellbeing,
+                            modx = student_status) +
+  ggplot2::ylim(1,6) +
+  theme_classic()
+```
+
+### PsyCheck and Music
+```{r}
+music_psycheck <- lm(
+  as.numeric(music) ~ as.numeric(psycheck),
+  data = survey_analysis_data
+)
+
+music_psycheck_status <- lm(
+  as.numeric(music) ~ as.numeric(psycheck) * as.factor(student_status),
+  data = survey_analysis_data
+)
+
+sjPlot::tab_model(music_psycheck,
+                  music_psycheck_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+interactions::interact_plot(music_psycheck_status,
+                            pred = psycheck,
+                            modx = student_status) +
+  ggplot2::ylim(1,6) +
+  theme_classic()
+```

@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Joel larwood" />
+
+<meta name="date" content="2020-07-01" />
+
+<title>Descriptives of Data</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">covid_music</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="describe_data.html">Descriptives</a>
+</li>
+<li>
+  <a href="analyse_surveys.html">Analyses</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Descriptives of Data</h1>
+<h4 class="author">Joel larwood</h4>
+<h4 class="date">2020-07-01</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span> workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2020-07-02
+</p>
+<p>
+<strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>covid_music/</code> <span class="glyphicon glyphicon-question-sign" aria-hidden="true" title="This is the local directory in which the code in this file was executed."> </span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version 1.6.2). The <em>Checks</em> tab describes the reproducibility checks that were applied when the results were created. The <em>Past versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges"> <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges" class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown is untracked by Git. To know which version of the R Markdown file created these results, you’ll want to first commit it to the Git repo. If you’re still working on the analysis, you can ignore this warning. When you’re finished, you can run <code>wflow_publish</code> to commit the R Markdown file and build the HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the global environment can affect the analysis in your R Markdown file in unknown ways. For reproduciblity it’s best to always run the code in an empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20200701code"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Seed:</strong> <code>set.seed(20200701)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20200701code" class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20200701)</code> was run prior to running the code in the R Markdown file. Setting a seed ensures that any results that rely on randomness, e.g. subsampling or permutations, are reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Session information:</strong> recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be confident that you successfully produced the results during this run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomjoellarwoodcovidmusictreeb1c22dceb6a0f29ceca511a2cdc351b117b4c081targetblankb1c22dca"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/joellarwood/covid_music/tree/b1c22dceb6a0f29ceca511a2cdc351b117b4c081" target="_blank">b1c22dc</a> </a>
+</p>
+</div>
+<div id="strongRepositoryversionstrongahrefhttpsgithubcomjoellarwoodcovidmusictreeb1c22dceb6a0f29ceca511a2cdc351b117b4c081targetblankb1c22dca" class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version <a href="https://github.com/joellarwood/covid_music/tree/b1c22dceb6a0f29ceca511a2cdc351b117b4c081" target="_blank">b1c22dc</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .RData
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+
+Untracked files:
+    Untracked:  analysis/analyse_surveys.rmd
+    Untracked:  analysis/describe_data.rmd
+    Untracked:  data/adequately_sampled.rds
+    Untracked:  data/covid_music_scored_vars.rds
+    Untracked:  data/reduced_international_student_survey.rds
+
+Unstaged changes:
+    Modified:   analysis/_site.yml
+    Modified:   analysis/index.Rmd
+    Modified:   clean_data.R
+    Modified:   explore_data.Rmd
+    Modified:   reduced_international_student_survey.csv
+    Modified:   reduced_international_student_survey.rds
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+There are no past versions. Publish this analysis with <code>wflow_publish()</code> to start tracking its development.
+</p>
+<hr>
+</div>
+</div>
+</div>
+<pre class="r"><code>knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      error = FALSE)</code></pre>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This data has come from a larger survey, however we are interested in specific variables relating to music use and COVID related wellbeing. We are also interested in how these variables and relationships between them differ according to whether participants are domestic or international students at a major Australian Uninversity.</p>
+<pre class="r"><code>data &lt;- read_rds(
+  &quot;data/covid_music_scored_vars.rds&quot;
+)</code></pre>
+</div>
+<div id="missing-data" class="section level2">
+<h2>Missing data</h2>
+<p>We can see from below that there is a problem with missing data</p>
+<pre class="r"><code>naniar::vis_miss(data)</code></pre>
+<p><img src="figure/describe_data.rmd/vismiss-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The plot below indicates that missingness is largely equal between international and domestic students. Further a t-test indicates no difference in the proportion of missingness between student groups, such that there was a higher mean for international than domestic students</p>
+<pre class="r"><code>data %&gt;% 
+  ggplot2::ggplot(
+    aes(x = prop_miss_all,
+        color = student_status,
+        fill = student_status)
+    ) + 
+  facet_wrap(vars(student_status),
+             nrow = 2) + 
+  ggplot2::geom_histogram(aes(y = ..density..)) +
+  geom_density(alpha = .2) + 
+  theme_classic() + 
+  xlim(0, 1)</code></pre>
+<p><img src="figure/describe_data.rmd/moremiss-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>data &lt;- data %&gt;% 
+  mutate(
+    student_status = student_status, 
+    adequate = if_else(prop_miss_all &lt; .5,
+                       TRUE,
+                       FALSE)
+  )</code></pre>
+<p>If we consider adequate sampling of participants we can see that there is an equal number of missing cases for domestic and international students, despite there being far more domestic students.</p>
+<pre class="r"><code>data %&gt;% 
+  ggplot2::ggplot(aes(
+    y = adequate,
+    fill = student_status,
+    group = student_status
+  )) +
+  geom_bar(position = &quot;dodge&quot;) </code></pre>
+<p><img src="figure/describe_data.rmd/adequateCount-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>We will delete all cases where missingness is over 50% of variables resulting 92 participants being removed.</p>
+<pre class="r"><code>data_adequate &lt;- data %&gt;% 
+  filter(adequate == TRUE)
+
+
+write_rds(data_adequate,
+          &quot;data/adequately_sampled.rds&quot;)</code></pre>
+</div>
+<div id="descriptives" class="section level2 tabset">
+<h2>Descriptives</h2>
+<div id="sample-and-covid" class="section level3">
+<h3>Sample and COVID</h3>
+<div id="sample" class="section level4">
+<h4>Sample</h4>
+<pre class="r"><code>cat_vars &lt;- arsenal::tableby(
+  student_status ~ ., 
+  data = select(data, 
+                student_status,
+                gender,
+                age,
+                enrolment_school,
+                current_circumstance)
+)
+
+cat_labs &lt;- list(
+  gender = &quot;Gender&quot;,
+  age = &quot;Age&quot;,
+  enrolement_school = &quot;School&quot;,
+  current_circumstances = &quot;COVID circumstances&quot;
+)
+
+summary(cat_vars,
+        labelTranslations = cat_labs)</code></pre>
+<table>
+<colgroup>
+<col width="59%" />
+<col width="11%" />
+<col width="14%" />
+<col width="10%" />
+<col width="4%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">Domestic (N=334)</th>
+<th align="center">International (N=131)</th>
+<th align="center">Total (N=465)</th>
+<th align="right">p value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>Gender</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.935</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Male</td>
+<td align="center">88 (26.3%)</td>
+<td align="center">36 (27.7%)</td>
+<td align="center">124 (26.7%)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Female</td>
+<td align="center">244 (73.1%)</td>
+<td align="center">93 (71.5%)</td>
+<td align="center">337 (72.6%)</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Prefer not to say</td>
+<td align="center">2 (0.6%)</td>
+<td align="center">1 (0.8%)</td>
+<td align="center">3 (0.6%)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left"><strong>Age</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">&lt; 0.001</td>
+</tr>
+<tr class="odd">
+<td align="left">   N-Miss</td>
+<td align="center">2</td>
+<td align="center">5</td>
+<td align="center">7</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Mean (SD)</td>
+<td align="center">19.081 (3.955)</td>
+<td align="center">21.056 (4.911)</td>
+<td align="center">19.624 (4.325)</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Range</td>
+<td align="center">17.000 - 51.000</td>
+<td align="center">17.000 - 68.000</td>
+<td align="center">17.000 - 68.000</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left"><strong>enrolment_school</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">&lt; 0.001</td>
+</tr>
+<tr class="odd">
+<td align="left">   N-Miss</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">2</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Business</td>
+<td align="center">81 (24.3%)</td>
+<td align="center">34 (26.2%)</td>
+<td align="center">115 (24.8%)</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Pharmacy</td>
+<td align="center">5 (1.5%)</td>
+<td align="center">0 (0.0%)</td>
+<td align="center">5 (1.1%)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Psychology</td>
+<td align="center">80 (24.0%)</td>
+<td align="center">64 (49.2%)</td>
+<td align="center">144 (31.1%)</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   ICTE</td>
+<td align="center">4 (1.2%)</td>
+<td align="center">3 (2.3%)</td>
+<td align="center">7 (1.5%)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Other, please write below</td>
+<td align="center">163 (48.9%)</td>
+<td align="center">29 (22.3%)</td>
+<td align="center">192 (41.5%)</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>current_circumstance</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">7</td>
+<td align="center">10</td>
+<td align="center">17</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   In self-isolation because you have been infected</td>
+<td align="center">0 (0.0%)</td>
+<td align="center">0 (0.0%)</td>
+<td align="center">0 (0.0%)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   In self-isolation because you have been in close contact with a confirmed case</td>
+<td align="center">0 (0.0%)</td>
+<td align="center">1 (0.8%)</td>
+<td align="center">1 (0.2%)</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Feeling sick or showing symptoms of coronavirus</td>
+<td align="center">0 (0.0%)</td>
+<td align="center">1 (0.8%)</td>
+<td align="center">1 (0.2%)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Staying at home for study/work</td>
+<td align="center">252 (77.1%)</td>
+<td align="center">109 (90.1%)</td>
+<td align="center">361 (80.6%)</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Still going out for study/work</td>
+<td align="center">48 (14.7%)</td>
+<td align="center">5 (4.1%)</td>
+<td align="center">53 (11.8%)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Other, please specify</td>
+<td align="center">27 (8.3%)</td>
+<td align="center">5 (4.1%)</td>
+<td align="center">32 (7.1%)</td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+<p>We can also see that international students tended to compete the survey later in the semester</p>
+<pre class="r"><code>data_adequate %&gt;%
+  ggplot(
+    aes(
+      x = date,
+      color = student_status,
+      fill = student_status
+    )
+  ) +
+  geom_density(alpha = .6) +
+  theme_classic()</code></pre>
+<p><img src="figure/describe_data.rmd/unnamed-chunk-1-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="measures" class="section level3">
+<h3>Measures</h3>
+<pre class="r"><code>measures_describe &lt;- arsenal::tableby(
+  student_status ~ ., 
+  data = select(data, 
+                student_status,
+                covid_stress,
+                emotional_response,
+                wellbeing,
+                psycheck)
+)
+
+my_labels &lt;- list(
+  student_status = &quot;Enrolment Status&quot;,
+  covid_stress = &quot;COVID related stress&quot;,
+  emotional_response = &quot;Emotional response to COVID&quot;,
+  wellbeing = &quot;W-E wellbeing scale&quot;,
+  psychech = &quot;PsyCheck&quot;
+)
+
+summary(measures_describe, 
+        labelTranslations = my_labels)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">Domestic (N=334)</th>
+<th align="center">International (N=131)</th>
+<th align="center">Total (N=465)</th>
+<th align="right">p value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>COVID related stress</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">&lt; 0.001</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">22</td>
+<td align="center">25</td>
+<td align="center">47</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">40.426 (9.372)</td>
+<td align="center">44.991 (8.873)</td>
+<td align="center">41.584 (9.449)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">13.000 - 63.000</td>
+<td align="center">13.000 - 65.000</td>
+<td align="center">13.000 - 65.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>Emotional response to COVID</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.380</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">30</td>
+<td align="center">28</td>
+<td align="center">58</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">51.477 (12.487)</td>
+<td align="center">52.748 (13.290)</td>
+<td align="center">51.799 (12.690)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">22.000 - 85.000</td>
+<td align="center">21.000 - 90.000</td>
+<td align="center">21.000 - 90.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>W-E wellbeing scale</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.364</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">39</td>
+<td align="center">37</td>
+<td align="center">76</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">20.732 (4.185)</td>
+<td align="center">21.202 (4.889)</td>
+<td align="center">20.846 (4.364)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">7.000 - 35.000</td>
+<td align="center">7.000 - 35.000</td>
+<td align="center">7.000 - 35.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>psycheck</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.337</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">39</td>
+<td align="center">38</td>
+<td align="center">77</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">10.559 (5.064)</td>
+<td align="center">11.151 (5.499)</td>
+<td align="center">10.701 (5.171)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">0.000 - 20.000</td>
+<td align="center">0.000 - 20.000</td>
+<td align="center">0.000 - 20.000</td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="coping-strategies" class="section level3">
+<h3>Coping strategies</h3>
+<pre class="r"><code>coping_describe &lt;- arsenal::tableby(
+  student_status ~ ., 
+  data = sjlabelled::remove_all_labels(
+    select(
+      data, 
+      student_status,
+      exercise:internet)
+  )
+)
+
+summary(coping_describe)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">Domestic (N=334)</th>
+<th align="center">International (N=131)</th>
+<th align="center">Total (N=465)</th>
+<th align="right">p value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>exercise</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.008</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">31</td>
+<td align="center">32</td>
+<td align="center">63</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">4.304 (1.553)</td>
+<td align="center">3.828 (1.539)</td>
+<td align="center">4.187 (1.561)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>music</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.248</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">31</td>
+<td align="center">32</td>
+<td align="center">63</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">4.789 (1.043)</td>
+<td align="center">4.636 (1.388)</td>
+<td align="center">4.751 (1.138)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>chores</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.511</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">31</td>
+<td align="center">32</td>
+<td align="center">63</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.660 (1.428)</td>
+<td align="center">3.768 (1.361)</td>
+<td align="center">3.687 (1.411)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>sleep</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.222</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">31</td>
+<td align="center">32</td>
+<td align="center">63</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">4.267 (1.390)</td>
+<td align="center">4.465 (1.409)</td>
+<td align="center">4.316 (1.395)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>control_thoughts</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.899</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">31</td>
+<td align="center">32</td>
+<td align="center">63</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.525 (1.334)</td>
+<td align="center">3.505 (1.380)</td>
+<td align="center">3.520 (1.344)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>evalaute_situation</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.616</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.993 (1.299)</td>
+<td align="center">4.071 (1.423)</td>
+<td align="center">4.012 (1.329)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>perspective_taking</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.480</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.884 (1.394)</td>
+<td align="center">4.000 (1.478)</td>
+<td align="center">3.913 (1.414)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>avoid_thing</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.812</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">33</td>
+<td align="center">65</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.871 (1.324)</td>
+<td align="center">3.908 (1.415)</td>
+<td align="center">3.880 (1.345)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>alone</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.879</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.983 (1.343)</td>
+<td align="center">3.960 (1.392)</td>
+<td align="center">3.978 (1.354)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>relaxation_techniques</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.093</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.308 (1.731)</td>
+<td align="center">3.636 (1.535)</td>
+<td align="center">3.389 (1.689)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>stress_management</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.012</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">33</td>
+<td align="center">65</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">4.199 (1.523)</td>
+<td align="center">3.755 (1.500)</td>
+<td align="center">4.090 (1.527)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>religious_activity</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">&lt; 0.001</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">1.798 (1.495)</td>
+<td align="center">2.525 (1.541)</td>
+<td align="center">1.978 (1.537)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>change_location</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.123</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.993 (1.612)</td>
+<td align="center">3.707 (1.567)</td>
+<td align="center">3.923 (1.604)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>call_someone</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">&lt; 0.001</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.348 (1.820)</td>
+<td align="center">4.323 (1.420)</td>
+<td align="center">3.589 (1.778)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>internet</strong></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="right">0.258</td>
+</tr>
+<tr class="even">
+<td align="left">   N-Miss</td>
+<td align="center">32</td>
+<td align="center">32</td>
+<td align="center">64</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">   Mean (SD)</td>
+<td align="center">3.828 (1.457)</td>
+<td align="center">4.020 (1.491)</td>
+<td align="center">3.875 (1.466)</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">   Range</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="center">1.000 - 6.000</td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>mean_coping &lt;- data_adequate %&gt;%
+  select(
+    student_status,
+    exercise:call_someone
+  ) %&gt;%
+  group_by(student_status) %&gt;% 
+  summarise_if(is.numeric,
+               list(~ mean(., na.rm = TRUE))) %&gt;%
+  pivot_longer(-student_status,
+               names_to = &quot;activity&quot;,
+               values_to = &quot;mean&quot;
+  )
+
+
+
+mean_coping %&gt;%
+  ggplot(
+    aes(
+      x = reorder(activity, mean),
+      y = mean,
+      color = student_status,
+      fill = student_status,
+      group = student_status
+    )
+  ) +
+  scale_x_discrete() +
+  geom_bar(stat = &quot;identity&quot;,
+           width = .4,
+           position = position_dodge(width = .6)) +
+  theme_classic() +
+  theme(legend.position = &quot;bottom&quot;) +
+  coord_flip() +
+  labs(
+    title = &quot;Mean endorsement of coping strategies&quot;
+  ) +
+  xlab(&quot;Coping Activity&quot;)</code></pre>
+<p><img src="figure/describe_data.rmd/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="trends-over-time" class="section level2 tabset">
+<h2>Trends over time</h2>
+<p>Here we present how the survey scores fluctuated over the data collection period</p>
+<div id="covid-stress" class="section level3">
+<h3>COVID stress</h3>
+<pre class="r"><code>data_adequate %&gt;%
+  ggpubr::ggscatterhist(
+    x = &quot;date&quot;,
+    y = &quot;covid_stress&quot;,
+    color = &quot;student_status&quot;,
+    margin.params = list(fill = &quot;student_status&quot;, color = &quot;black&quot;, size = 0.2),
+    add = &quot;reg.line&quot;,
+    alpha = .6
+  )  </code></pre>
+<p><img src="figure/describe_data.rmd/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="covid-emotional-response" class="section level3">
+<h3>COVID emotional response</h3>
+<pre class="r"><code>data_adequate %&gt;%
+  ggpubr::ggscatterhist(
+    x = &quot;date&quot;,
+    y = &quot;emotional_response&quot;,
+    color = &quot;student_status&quot;,
+    margin.params = list(fill = &quot;student_status&quot;, color = &quot;black&quot;, size = 0.2),
+    add = &quot;reg.line&quot;,
+    alpha = .6
+  )  </code></pre>
+<p><img src="figure/describe_data.rmd/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="warick-edinburgh-wellbeing" class="section level3">
+<h3>Warick Edinburgh wellbeing</h3>
+<pre class="r"><code>data_adequate %&gt;%
+  ggpubr::ggscatterhist(
+    x = &quot;date&quot;,
+    y = &quot;wellbeing&quot;,
+    color = &quot;student_status&quot;,
+    margin.params = list(fill = &quot;student_status&quot;, color = &quot;black&quot;, size = 0.2),
+    add = &quot;reg.line&quot;,
+    alpha = .6
+  )  </code></pre>
+<p><img src="figure/describe_data.rmd/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="psycheck" class="section level3">
+<h3>PsyCheck</h3>
+<pre class="r"><code>data_adequate %&gt;%
+  ggpubr::ggscatterhist(
+    x = &quot;date&quot;,
+    y = &quot;psycheck&quot;,
+    color = &quot;student_status&quot;,
+    margin.params = list(fill = &quot;student_status&quot;, color = &quot;black&quot;, size = 0.2),
+    add = &quot;reg.line&quot;,
+    alpha = .6
+  )  </code></pre>
+<p><img src="figure/describe_data.rmd/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="coping-strategies-1" class="section level3">
+<h3>Coping Strategies</h3>
+<pre class="r"><code>data_adequate %&gt;%
+   ggpubr::ggscatterhist(
+    x = &quot;date&quot;,
+    y = &quot;music&quot;,
+    color = &quot;student_status&quot;,
+    margin.params = list(fill = &quot;student_status&quot;, color = &quot;black&quot;, size = 0.2),
+    add = &quot;reg.line&quot;,
+    alpha = .6    
+    )  </code></pre>
+<p><img src="figure/describe_data.rmd/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;" /></p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span> Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>R version 3.6.3 (2020-02-29)
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
+Running under: macOS Catalina 10.15.4
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+
+locale:
+[1] en_AU.UTF-8/en_AU.UTF-8/en_AU.UTF-8/C/en_AU.UTF-8/en_AU.UTF-8
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] arsenal_3.4.0    kableExtra_1.1.0 naniar_0.5.0     ggpubr_0.2.5    
+ [5] magrittr_1.5     forcats_0.5.0    stringr_1.4.0    dplyr_0.8.5     
+ [9] purrr_0.3.4      readr_1.3.1      tidyr_1.0.2      tibble_3.0.0    
+[13] ggplot2_3.3.0    tidyverse_1.3.0  workflowr_1.6.2 
+
+loaded via a namespace (and not attached):
+ [1] httr_1.4.1        jsonlite_1.6.1    viridisLite_0.3.0 splines_3.6.3    
+ [5] modelr_0.1.6      assertthat_0.2.1  highr_0.8         cellranger_1.1.0 
+ [9] yaml_2.2.1        pillar_1.4.3      backports_1.1.5   lattice_0.20-38  
+[13] glue_1.3.2        visdat_0.5.3      digest_0.6.25     promises_1.1.0   
+[17] ggsignif_0.6.0    rvest_0.3.5       colorspace_1.4-1  cowplot_1.0.0    
+[21] htmltools_0.4.0   httpuv_1.5.2      Matrix_1.2-18     pkgconfig_2.0.3  
+[25] broom_0.5.5       haven_2.2.0       scales_1.1.0      webshot_0.5.2    
+[29] later_1.0.0       git2r_0.26.1      mgcv_1.8-31       generics_0.0.2   
+[33] farver_2.0.3      sjlabelled_1.1.3  ellipsis_0.3.0    withr_2.1.2      
+[37] cli_2.0.2         survival_3.1-8    crayon_1.3.4      readxl_1.3.1     
+[41] evaluate_0.14     fs_1.3.2          fansi_0.4.1       nlme_3.1-144     
+[45] xml2_1.2.5        MBESS_4.6.0       tools_3.6.3       hms_0.5.3        
+[49] lifecycle_0.2.0   munsell_0.5.0     reprex_0.3.0      compiler_3.6.3   
+[53] rlang_0.4.6       grid_3.6.3        rstudioapi_0.11   labeling_0.3     
+[57] rmarkdown_2.1     gtable_0.3.0      DBI_1.1.0         R6_2.4.1         
+[61] lubridate_1.7.4   knitr_1.28        apa_0.3.3         rprojroot_1.3-2  
+[65] insight_0.8.2     stringi_1.4.6     Rcpp_1.0.4        vctrs_0.2.4      
+[69] dbplyr_1.4.2      tidyselect_1.0.0  xfun_0.12        </code></pre>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

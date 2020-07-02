@@ -1,0 +1,293 @@
+---
+title: "Descriptives of Data"
+author: "Joel larwood"
+date: '2020-07-01'
+output:
+  html_document:
+    df_print: paged
+    toc: no
+  html_notebook: default
+  workflowr::wflow_html:
+    code_folding: hide
+    toc: no
+editor_options:
+  chunk_output_type: console
+---
+
+```{r housekeep}
+
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      error = FALSE)
+```
+
+```{r pacakges, echo = FALSE, message=FALSE}
+library(tidyverse)
+library(ggpubr)
+library(naniar)
+library(kableExtra)
+library(arsenal)
+```
+
+
+## Introduction
+
+This data has come from a larger survey, however we are interested in specific variables relating to music use and COVID related wellbeing. We are also interested in how these variables and relationships between them differ according to whether participants are domestic or international students at a major Australian Uninversity. 
+
+
+```{r dataload}
+data <- read_rds(
+  "data/covid_music_scored_vars.rds"
+)
+```
+
+## Missing data 
+
+We can see from below that there is a problem with missing data
+```{r vismiss}
+naniar::vis_miss(data)
+```
+
+The plot below indicates that missingness is largely equal between international and domestic students. Further a t-test indicates no difference in the proportion of missingness between student groups, such that there was a higher mean for international than domestic students `r apa::t_apa(apa::t_test(formula = prop_miss_all ~ student_status, data = data), format = "rmarkdown")`
+```{r moremiss}
+data %>% 
+  ggplot2::ggplot(
+    aes(x = prop_miss_all,
+        color = student_status,
+        fill = student_status)
+    ) + 
+  facet_wrap(vars(student_status),
+             nrow = 2) + 
+  ggplot2::geom_histogram(aes(y = ..density..)) +
+  geom_density(alpha = .2) + 
+  theme_classic() + 
+  xlim(0, 1)
+
+data <- data %>% 
+  mutate(
+    student_status = student_status, 
+    adequate = if_else(prop_miss_all < .5,
+                       TRUE,
+                       FALSE)
+  )
+```
+
+
+If we consider adequate sampling of participants we can see that there is an equal number of missing cases for domestic and international students, despite there being far more domestic students.
+
+```{r adequateCount}
+data %>% 
+  ggplot2::ggplot(aes(
+    y = adequate,
+    fill = student_status,
+    group = student_status
+  )) +
+  geom_bar(position = "dodge") 
+```
+
+We will delete all cases where missingness is over 50% of variables resulting `r sum(!data$adequate)` participants being removed.
+
+```{r adequateFilter}
+data_adequate <- data %>% 
+  filter(adequate == TRUE)
+
+
+write_rds(data_adequate,
+          "data/adequately_sampled.rds")
+```
+
+## Descriptives {.tabset}
+
+### Sample and COVID
+
+#### Sample 
+```{r sampleChar, results="asis"}
+cat_vars <- arsenal::tableby(
+  student_status ~ ., 
+  data = select(data, 
+                student_status,
+                gender,
+                age,
+                enrolment_school,
+                current_circumstance)
+)
+
+cat_labs <- list(
+  gender = "Gender",
+  age = "Age",
+  enrolement_school = "School",
+  current_circumstances = "COVID circumstances"
+)
+
+summary(cat_vars,
+        labelTranslations = cat_labs)
+
+```
+
+We can also see that international students tended to compete the survey later in the semester
+```{r}
+data_adequate %>%
+  ggplot(
+    aes(
+      x = date,
+      color = student_status,
+      fill = student_status
+    )
+  ) +
+  geom_density(alpha = .6) +
+  theme_classic()
+```
+
+### Measures
+
+```{r measuresDesc, results="asis"}
+measures_describe <- arsenal::tableby(
+  student_status ~ ., 
+  data = select(data, 
+                student_status,
+                covid_stress,
+                emotional_response,
+                wellbeing,
+                psycheck)
+)
+
+my_labels <- list(
+  student_status = "Enrolment Status",
+  covid_stress = "COVID related stress",
+  emotional_response = "Emotional response to COVID",
+  wellbeing = "W-E wellbeing scale",
+  psychech = "PsyCheck"
+)
+
+summary(measures_describe, 
+        labelTranslations = my_labels)
+```
+
+
+### Coping strategies
+```{r CopingDec, results = "asis"}
+coping_describe <- arsenal::tableby(
+  student_status ~ ., 
+  data = sjlabelled::remove_all_labels(
+    select(
+      data, 
+      student_status,
+      exercise:internet)
+  )
+)
+
+summary(coping_describe)
+```
+
+```{r}
+mean_coping <- data_adequate %>%
+  select(
+    student_status,
+    exercise:call_someone
+  ) %>%
+  group_by(student_status) %>% 
+  summarise_if(is.numeric,
+               list(~ mean(., na.rm = TRUE))) %>%
+  pivot_longer(-student_status,
+               names_to = "activity",
+               values_to = "mean"
+  )
+
+
+
+mean_coping %>%
+  ggplot(
+    aes(
+      x = reorder(activity, mean),
+      y = mean,
+      color = student_status,
+      fill = student_status,
+      group = student_status
+    )
+  ) +
+  scale_x_discrete() +
+  geom_bar(stat = "identity",
+           width = .4,
+           position = position_dodge(width = .6)) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  coord_flip() +
+  labs(
+    title = "Mean endorsement of coping strategies"
+  ) +
+  xlab("Coping Activity")
+
+```
+
+## Trends over time {.tabset}
+
+Here we present how the survey scores fluctuated over the data collection period 
+
+### COVID stress 
+
+```{r}
+data_adequate %>%
+  ggpubr::ggscatterhist(
+    x = "date",
+    y = "covid_stress",
+    color = "student_status",
+    margin.params = list(fill = "student_status", color = "black", size = 0.2),
+    add = "reg.line",
+    alpha = .6
+  )  
+
+```
+
+### COVID emotional response
+```{r}
+data_adequate %>%
+  ggpubr::ggscatterhist(
+    x = "date",
+    y = "emotional_response",
+    color = "student_status",
+    margin.params = list(fill = "student_status", color = "black", size = 0.2),
+    add = "reg.line",
+    alpha = .6
+  )  
+```
+
+### Warick Edinburgh wellbeing 
+```{r}
+data_adequate %>%
+  ggpubr::ggscatterhist(
+    x = "date",
+    y = "wellbeing",
+    color = "student_status",
+    margin.params = list(fill = "student_status", color = "black", size = 0.2),
+    add = "reg.line",
+    alpha = .6
+  )  
+```
+
+### PsyCheck
+```{r}
+data_adequate %>%
+  ggpubr::ggscatterhist(
+    x = "date",
+    y = "psycheck",
+    color = "student_status",
+    margin.params = list(fill = "student_status", color = "black", size = 0.2),
+    add = "reg.line",
+    alpha = .6
+  )  
+```
+
+### Coping Strategies 
+
+```{r}
+data_adequate %>%
+   ggpubr::ggscatterhist(
+    x = "date",
+    y = "music",
+    color = "student_status",
+    margin.params = list(fill = "student_status", color = "black", size = 0.2),
+    add = "reg.line",
+    alpha = .6    
+    )  
+```
+
