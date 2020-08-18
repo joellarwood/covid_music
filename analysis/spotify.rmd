@@ -13,9 +13,7 @@ library(lubridate)
 library(tidyverse)
 ```
 
-## Introduction
-
-```{r}
+```{r echo = FALSE}
 spotify <- read_rds("data/spotify_added.rds") 
 
 lyrics <- read_rds(
@@ -46,6 +44,41 @@ spotify_added <- full_join(
 
 
 ```
+Here I present the relationship between music variables and questionnaire items. Below the  discriptives can be seen for the key 3 music variables: Valence,  enegry, and lyric sentiment 
+
+```{r}
+ggplot(
+  spotify_added,
+  aes(valence)
+) +
+  geom_density(fill = "blue", alpha = .5) + 
+  theme_classic() + 
+  xlim(0, 1) +
+  labs(subtitle = "Density plot of song valence")
+
+ggplot(
+  spotify_added,
+  aes(energy)
+) +
+  geom_density(fill = "blue", alpha = .5) + 
+  theme_classic() + 
+  xlim(0, 1) +
+  labs(subtitle = "Density plot of song energy")
+
+ggplot(
+  spotify_added,
+  aes(sentiment)
+) +
+  geom_density(fill = "blue", alpha = .5) + 
+  theme_classic() + 
+  xlim(0, 1) +
+  labs(subtitle = "Density plot of lyric sentiment")
+
+```
+
+
+
+
 
 ## Relationships with scales and music {.tabset}
 
@@ -298,4 +331,3 @@ sjPlot::tab_model(music_energy_psycheck,
                   dv.labels = c("Music", "Music"))
 
 ```
-
