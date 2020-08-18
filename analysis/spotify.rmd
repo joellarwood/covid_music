@@ -1,5 +1,5 @@
 ---
-title: "spotify"
+title: "Music Analyses"
 author: "Joel larwood"
 date: "2020-07-14"
 output: workflowr::wflow_html
@@ -16,11 +16,42 @@ library(tidyverse)
 ## Introduction
 
 ```{r}
-spotify_added <- read_rds("data/spotify_added.rds") 
+spotify <- read_rds("data/spotify_added.rds") 
+
+lyrics <- read_rds(
+  here::here(
+    "data",
+    "spotify_lyrics.Rds"
+  )
+)
+
+stop_words <- tidytext::stop_words
+
+lyrics_tidy <- lyrics %>% 
+  tidytext::unnest_tokens(
+    word, lyric
+  ) %>% 
+  anti_join(stop_words)%>% 
+  inner_join(tidytext::get_sentiments("afinn")) %>% 
+  group_by(id) %>% 
+  summarise(sentiment = mean(value)) 
+
+
+
+spotify_added <- full_join(
+  spotify,
+  lyrics_tidy,
+  by = "id"
+)
+
+
 ```
 
+## Relationships with scales and music {.tabset}
 
-## Correlation between valence and covid stress 
+### Valence
+
+#### Correlation between valence and covid stress
 
 ```{r}
 music_valence_covid <- lm(
@@ -38,50 +69,39 @@ sjPlot::tab_model(music_valence_covid,
                   show.aic = TRUE,
                   show.std = TRUE,
                   dv.labels = c("Music", "Music"))
-
- interactions::interact_plot(music_valence_covid,
-                             pred = covid_stress,
-                             ) +
-   ggplot2::ylim(1,6) +
-  theme_classic()
 ```
 
-## Correlation between valence and emotional response 
+#### Correlation between valence and emotional response 
 
 ```{r}
 music_valence_covid_emotion <- lm(
-  as.numeric(music) ~ as.numeric(emotional_response),
+  as.numeric(valence) ~ as.numeric(emotional_response),
   data = spotify_added
 )
 
-music_covid_emotion_status <- lm(
-  as.numeric(music) ~ as.numeric(emotional_response) * as.factor(student_status),
+music_valence_covid_emotion_status <- lm(
+  as.numeric(valence) ~ as.numeric(emotional_response) * as.factor(student_status),
   data = spotify_added
 )
 
-sjPlot::tab_model(music_covid_emotion,
-                  music_covid_emotion_status,
+sjPlot::tab_model(music_valence_covid_emotion,
+                  music_valence_covid_emotion_status,
                   show.aic = TRUE,
                   show.std = TRUE,
                   dv.labels = c("Music", "Music"))
 
-# interactions::interact_plot(music_covid_emotion_status,
-#                             pred = emotional_response,
-#                             modx = student_status) +
-#   ggplot2::ylim(1,6) +
-#   theme_classic()
 ```
 
-### Correlation between valence and wellbeing
+#### Correlation between valence and wellbeing
 ```{r}
 music_valence_wellbeing <- lm(
   as.numeric(valence) ~ as.numeric(wellbeing),
-  data = for_spotify
+  data = spotify_added
 )
 
 music_valence_wellbeing_status <- lm(
   as.numeric(valence) ~ as.numeric(wellbeing) * as.factor(student_status),
-  data = for_spotify
+  data = spotify_added
 )
 
 sjPlot::tab_model(music_valence_wellbeing,
@@ -90,14 +110,9 @@ sjPlot::tab_model(music_valence_wellbeing,
                   show.std = TRUE,
                   dv.labels = c("Music", "Music"))
 
-interactions::interact_plot(music_valence_wellbeing_status,
-                            pred = wellbeing,
-                            modx = student_status) +
-  ggplot2::ylim(1,6) +
-  theme_classic()
 ```
 
-### PsyCheck and Music
+#### PsyCheck and Valence
 ```{r}
 music_valence_psycheck <- lm(
   as.numeric(valence) ~ as.numeric(psycheck),
@@ -115,29 +130,172 @@ sjPlot::tab_model(music_valence_psycheck,
                   show.std = TRUE,
                   dv.labels = c("Music", "Music"))
 
-interactions::interact_plot(music_valence_psycheck_status,
-                            pred = psycheck,
-                            modx = student_status) +
-  ggplot2::ylim(1,6) +
-  theme_classic()
 ```
 
+### Lyrical Sentiment 
+
+#### Correlation between sentiment and covid stress
 
 ```{r}
-music_danceability_covid <- lm(
-  as.numeric(danceability) ~ as.numeric(covid_stress),
+music_sentiment_covid <- lm(
+  as.numeric(sentiment) ~ as.numeric(covid_stress),
   data = spotify_added
 )
 
-music_danceability_covid_status <- lm(
-  as.numeric(danceability) ~ as.numeric(covid_stress) * as.factor(student_status),
+music_sentiment_covid_status <- lm(
+  as.numeric(sentiment) ~ as.numeric(covid_stress) * as.factor(student_status),
   data = spotify_added
 )
 
-sjPlot::tab_model(music_danceability_covid,
-                  music_danceability_covid_status,
+sjPlot::tab_model(music_sentiment_covid,
+                  music_sentiment_covid_status,
                   show.aic = TRUE,
                   show.std = TRUE,
                   dv.labels = c("Music", "Music"))
+```
+
+#### Correlation between sentiment and emotional response 
+
+```{r}
+music_sentiment_covid_emotion <- lm(
+  as.numeric(sentiment) ~ as.numeric(emotional_response),
+  data = spotify_added
+)
+
+music_sentiment_covid_emotion_status <- lm(
+  as.numeric(sentiment) ~ as.numeric(emotional_response) * as.factor(student_status),
+  data = spotify_added
+)
+
+sjPlot::tab_model(music_sentiment_covid_emotion,
+                  music_sentiment_covid_emotion_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+```
+
+#### Correlation between sentiment and wellbeing
+```{r}
+music_sentiment_wellbeing <- lm(
+  as.numeric(sentiment) ~ as.numeric(wellbeing),
+  data = spotify_added
+)
+
+music_sentiment_wellbeing_status <- lm(
+  as.numeric(sentiment) ~ as.numeric(wellbeing) * as.factor(student_status),
+  data = spotify_added
+)
+
+sjPlot::tab_model(music_sentiment_wellbeing,
+                  music_sentiment_wellbeing_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+```
+
+#### PsyCheck and sentiment
+```{r}
+music_sentiment_psycheck <- lm(
+  as.numeric(sentiment) ~ as.numeric(psycheck),
+  data = spotify_added
+)
+
+music_sentiment_psycheck_status <- lm(
+  as.numeric(sentiment) ~ as.numeric(psycheck) * as.factor(student_status),
+  data = spotify_added
+)
+
+sjPlot::tab_model(music_sentiment_psycheck,
+                  music_sentiment_psycheck_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+```
+
+
+### Energy
+
+#### Correlation between energy and covid stress
+
+```{r}
+music_energy_covid <- lm(
+  as.numeric(energy) ~ as.numeric(covid_stress),
+  data = spotify_added
+)
+
+music_energy_covid_status <- lm(
+  as.numeric(energy) ~ as.numeric(covid_stress) * as.factor(student_status),
+  data = spotify_added
+)
+
+sjPlot::tab_model(music_energy_covid,
+                  music_energy_covid_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+```
+
+#### Correlation between energy and emotional response 
+
+```{r}
+music_energy_covid_emotion <- lm(
+  as.numeric(energy) ~ as.numeric(emotional_response),
+  data = spotify_added
+)
+
+music_energy_covid_emotion_status <- lm(
+  as.numeric(energy) ~ as.numeric(emotional_response) * as.factor(student_status),
+  data = spotify_added
+)
+
+sjPlot::tab_model(music_energy_covid_emotion,
+                  music_energy_covid_emotion_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+```
+
+#### Correlation between energy and wellbeing
+```{r}
+music_energy_wellbeing <- lm(
+  as.numeric(energy) ~ as.numeric(wellbeing),
+  data = spotify_added
+)
+
+music_energy_wellbeing_status <- lm(
+  as.numeric(energy) ~ as.numeric(wellbeing) * as.factor(student_status),
+  data = spotify_added
+)
+
+sjPlot::tab_model(music_energy_wellbeing,
+                  music_energy_wellbeing_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
+```
+
+#### PsyCheck and energy
+```{r}
+music_energy_psycheck <- lm(
+  as.numeric(energy) ~ as.numeric(psycheck),
+  data = spotify_added
+)
+
+music_energy_psycheck_status <- lm(
+  as.numeric(energy) ~ as.numeric(psycheck) * as.factor(student_status),
+  data = spotify_added
+)
+
+sjPlot::tab_model(music_energy_psycheck,
+                  music_energy_psycheck_status,
+                  show.aic = TRUE,
+                  show.std = TRUE,
+                  dv.labels = c("Music", "Music"))
+
 ```
 

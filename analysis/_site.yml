@@ -7,9 +7,11 @@ navbar:
     href: index.html
   - text: Descriptives
     href: describe_data.html
-  - text: Analyses 
+  - text: Survey Analyses 
     href: analyse_surveys.html
-output:
+  - text: Music Analyses
+    href: spotify.html
+  output:
   workflowr::wflow_html:
     toc: yes
     toc_float: yes

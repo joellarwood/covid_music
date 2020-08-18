@@ -32,7 +32,10 @@ library(apa)
 ```{r loadin}
 
 survey_analysis_data <- read_rds(
-  "data/adequately_sampled.rds"
+  here::here(
+    "data",
+    "adequately_sampled.rds"
+  )
 )
 
 ```
