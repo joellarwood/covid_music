@@ -1,12 +1,3 @@
-test_tibble <- tibble::tribble( # this is so I can test the function
-  ~song, ~artist, ~pid,
-  "Tangled, Content", "Luca Brasi", 1,
-  "Reviews", "Bugs", 2, 
-  "Love Will Tear Us Apart", "Joy Division", 3, 
-  "noafaa", "asfdas", 6,
-  "Or Nah", "Ty Dolla $ign", 4,
-  "1996", "The Wombats", 5,
-)
 
 library(spotifyr) # load spotifyR
 
@@ -58,50 +49,32 @@ search_get_features <- function(artist, song) {
   return(audio_features)
 }
 
-search_luca <- spotifyr::search_spotify(paste("Tangled, Content", "Luca Brasi"), type = "track")
+for_spotify <- read_rds("data/covid_music_scored_vars.rds") %>% 
+  as_tibble() %>% 
+  drop_na(music_info_4)
 
-get_luca <- search_get_features("Tangled, Content", "Luca Brasi")
 
-joy_search <- spotifyr::search_spotify(paste("Love will tear us apart", "Joy Division"), type = "track")
+possibly_wrap <- possibly(search_get_features, otherwise = tibble())
 
-get_joy <- search_get_features("Love will tear us apart", "Joy Division")
+dataframe_audio_features <- mutate( 
+  for_spotify, 
+  audio_features = map2(
+    music_info_4, 
+    music_info_5, 
+    possibly_wrap
+  )
+) %>% 
+  unnest(audio_features) 
 
-search_dolla <- spotifyr::search_spotify(paste("Or Nah", "Ty Dolla $ign"), type = "track")
-  
-
-get_dataframe_audio_features <- function(data, artist, song, nested = FALSE) {
-  
-  # This function gets the audio features for songs listened in a dataframe
-  # wrap for when there is no result 
-  possibly_wrap <- possibly(search_get_features, otherwise = tibble())
-  
-  # loop through frame and return data frame with audio features
-  
-  dataframe_audio_features <- mutate( 
-    data, 
-    audio_features = map2(
-      artist, 
-      song, 
-      possibly_wrap
+dataframe_audio_features %>% 
+  select(
+    id, 
+    song_result:tempo
+  ) %>% 
+  write_rds(
+    here::here(
+    "data",
+    "spotify_features.rds"
     )
   )
-  
-  # return results as columns where each row is each song listed in original dataframe
-  if(nested == FALSE){
-    dataframe_audio_features <- tibble::as_tibble(
-      tidyr::unnest(dataframe_audio_features,
-                    cols = audio_features)
-    )
-  }
-  
-  return(dataframe_audio_features)
-}
 
-
-## Test function using test dataframe
-
-test_rtn_false <- get_dataframe_audio_features(
-  test_tibble,
-  artist,
-  song
-)

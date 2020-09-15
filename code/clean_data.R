@@ -51,7 +51,7 @@ variable_keep <- raw_survey %>%
   student_status, #international v domestic
   citizenship, # citizenship
   ethnic_group, #ethnicity
-  current_circumstance, # resticitions
+  current_circumstance, # restrictions
   covid_19_stress_1:covid_19_stress_13, # COVID stress
   emotional_responses_1:emotional_responses_18, #COVID emotional response
   coping_strategies_1:coping_strategies_15, # Coping strategies 
@@ -103,7 +103,7 @@ variable_keep <- raw_survey %>%
     replace = list(
       age = c(0, 1, 2, 1998, 99, 999)
     )
-  ) %>%  
+  ) %>% 
   janitor::clean_names()
 
 
@@ -130,6 +130,20 @@ scores_only <- variable_keep %>%
   ) 
 
 # Add coping strategies
+#functions for mutate
+mech_occur <- function(x){
+  if_else(x == 1,
+          FALSE,
+          TRUE,
+          NA)
+}
+
+score_cope <- function(x){
+  ifelse(x > 1,
+         x - 1,
+         NA)
+}
+
 
 scores_coping <- variable_keep %>% 
   select(
@@ -140,7 +154,16 @@ scores_coping <- variable_keep %>%
     -prop_miss_all
   ) %>% 
   full_join(scores_only) %>% 
-  naniar::add_prop_miss() 
+  naniar::add_prop_miss() %>% 
+  mutate(
+    across(
+      exercise:internet, 
+      list( 
+        occur = mech_occur,
+        score = score_cope
+      )
+    )
+  )
 
 # write this file 
 
@@ -149,33 +172,4 @@ write_rds(
   "data/covid_music_scored_vars.rds"
 )
 
-# Missing data anlyses ----------------------------------------------------
 
-naniar::vis_miss(scores_coping)
-
-# MissMech::TestMCARNormality(
-#   data = select_if(variable_keep, is.numeric)
-# )
-
-
-
-# write condensed survey --------------------------------------------------
-
-write_csv(
-  atempted_survey,
-  "reduced_international_student_survey.csv"
-)
-  
-write_rds(  atempted_survey,
-            "reduced_international_student_survey.rds"
-)
- 
-
-tmp <-   raw_survey %>% 
-  mutate_at(
-    .vars = vars(gender, 
-                 current_circumstance,
-                 student_status,
-                 enrolment_school),
-    .funs = sjlabelled::as_label
-  )
