@@ -2,10 +2,11 @@
 
 library(genius)
 library(tidyverse)
+library(tidytext)
 
 spotify_lyrics <- here::here(
   "data",
-  "spotify_added.rds"
+  "spotify_features.rds"
 ) %>% 
   read_rds() %>% 
   genius::add_genius(
@@ -14,10 +15,30 @@ spotify_lyrics <- here::here(
     type = "lyrics"
   )
 
+
+lyrics <- spotify_lyrics %>% 
+  select(artist_result,
+         song_result,
+         track_title,
+         line,
+         lyric
+         ) %>% 
+  tidytext::unnest_tokens(
+    output = word,
+    input = lyric
+  ) %>% 
+  anti_join(tidytext::stop_words) %>% 
+  inner_join(tidytext::get_sentiments("afinn")) %>% 
+  group_by(track_title) %>% 
+  summarise(
+    sentiment = mean(value)
+  )
+
+
 write_rds(
-  spotify_lyrics, 
+  lyrics, 
   here::here(
     "data",
-    "spotify_lyrics.rds"
+    "lyrics.rds"
   )
 )

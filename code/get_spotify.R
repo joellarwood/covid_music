@@ -21,13 +21,18 @@ dataframe_audio_features <- mutate(
     possibly_wrap
   )
 ) %>% 
-  unnest(audio_features)
+  unnest(audio_features) 
+
+
+spotify_features <- dataframe_audio_features %>% 
+  select(id,
+         artist_result:tempo)
 
 write_rds(dataframe_audio_features, "data/spotify_added.rds")
 
 write_csv(dataframe_audio_features, "data/spotify_added.csv")
 
-
+write_rds(spotify_features, "data/spotify_features.rds")
 
 
 

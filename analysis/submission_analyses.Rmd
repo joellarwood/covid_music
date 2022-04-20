@@ -1,0 +1,14 @@
+---
+title: "Submission Analyses"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(afex)
+library(ggridges)
+library(emmeans)
+library(here)
+library(arsenal)
+```
+
